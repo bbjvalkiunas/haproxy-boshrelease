@@ -31,7 +31,7 @@ global
     if p("ha_proxy.disable_tls_tickets")
         ssl_flags = "#{ssl_flags} no-tls-tickets"
     end
--%>
+%>
     ssl-default-bind-options <%= ssl_flags %>
     ssl-default-bind-ciphers <%= p("ha_proxy.ssl_ciphers") %>
     ssl-default-server-options <%= ssl_flags %>
@@ -170,18 +170,18 @@ frontend https-in
     <% if p("ha_proxy.accept_proxy") %>
     bind <%= p("ha_proxy.binding_ip") %>:443 accept-proxy ssl crt /var/vcap/jobs/haproxy/config/ssl
     <% else %>
-    bind <%= p("ha_proxy.binding_ip") %>:443 ssl crt /var/vcap/jobs/haproxy/config/ssl <% if p("ha_proxy.client_cert") == true -%>
+    bind <%= p("ha_proxy.binding_ip") %>:443 ssl crt /var/vcap/jobs/haproxy/config/ssl <% if p("ha_proxy.client_cert") == true %>
       <%
         client_ca_certs = nil
         if_p("ha_proxy.client_ca_file") { client_ca_certs = "/var/vcap/jobs/haproxy/config/client-ca-certs.pem" }
         unless client_ca_certs
           client_ca_certs = "/etc/ssl/certs/ca-certificates.crt"
         end
-      -%> ca-file <%= client_ca_certs %> verify optional <% if_p("ha_proxy.client_cert_ignore_err") do -%>
-      crt-ignore-err <%= p("ha_proxy.client_cert_ignore_err")-%> <% end -%>
-      <% if_p("ha_proxy.client_revocation_list") do -%>
-        crl-file /var/vcap/jobs/haproxy/config/client-revocation-list.pem <% end -%>
-      <% end -%>
+      %> ca-file <%= client_ca_certs %> verify optional <% if_p("ha_proxy.client_cert_ignore_err") do %>
+      crt-ignore-err <%= p("ha_proxy.client_cert_ignore_err")%> <% end %>
+      <% if_p("ha_proxy.client_revocation_list") do %>
+        crl-file /var/vcap/jobs/haproxy/config/client-revocation-list.pem <% end %>
+      <% end %>
     <% end %>
     <% if_p("ha_proxy.cidr_whitelist") do %>
     acl whitelist src -f /var/vcap/jobs/haproxy/config/whitelist_cidrs.txt
@@ -302,15 +302,15 @@ backend http-routers
     end
     %>
 
-    <% backend_servers.each_with_index do |ip, index| -%>
-        server node<%= index %> <%= ip %>:<%= backend_port %> <% if_p("ha_proxy.resolvers") do -%>
-        resolvers default <% end -%>
-        <% if_p("ha_proxy.backend_crt") do -%> crt  /var/vcap/jobs/haproxy/config/backend-crt.pem <% end -%>
-        check inter 1000 <% if p("ha_proxy.backend_ssl").downcase == "verify" then -%>
-        ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem <% if_p("ha_proxy.backend_ssl_verifyhost") do | verify_hostname | -%>
-        verifyhost <%= verify_hostname %> <% end -%>
-        <% elsif p("ha_proxy.backend_ssl").downcase == "noverify" then -%>
-        ssl verify none <% end -%>
+    <% backend_servers.each_with_index do |ip, index| %>
+        server node<%= index %> <%= ip %>:<%= backend_port %> <% if_p("ha_proxy.resolvers") do %>
+        resolvers default <% end %>
+        <% if_p("ha_proxy.backend_crt") do %> crt  /var/vcap/jobs/haproxy/config/backend-crt.pem <% end %>
+        check inter 1000 <% if p("ha_proxy.backend_ssl").downcase == "verify" then %>
+        ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem <% if_p("ha_proxy.backend_ssl_verifyhost") do | verify_hostname | %>
+        verifyhost <%= verify_hostname %> <% end %>
+        <% elsif p("ha_proxy.backend_ssl").downcase == "noverify" then %>
+        ssl verify none <% end %>
 
     <% end %>
 
@@ -326,18 +326,18 @@ backend http-routed-backend-<%= prefix_hash %>
     compression type <%= p("ha_proxy.compress_types") %>
     <% end %>
     <% data["servers"].each_with_index do |ip, index| %>
-        server node<%= index %> <%= ip %>:<%= data["port"] %> <% if_p("ha_proxy.resolvers") do -%>
-        resolvers default <% end -%>
-        check inter 1000 <% if data["backend_ssl"] then -%>
-           <% if data["backend_ssl"].downcase == "verify" then -%>
-             ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem <% if data["backend_verifyhost"] then -%>
-             verifyhost <%= data["backend_verifyhost"] %> <% end -%>
-           <% elsif data["backend_ssl"].downcase == "noverify" then -%>
-             ssl verify none <% end -%>
-        <% end -%>
+        server node<%= index %> <%= ip %>:<%= data["port"] %> <% if_p("ha_proxy.resolvers") do %>
+        resolvers default <% end %>
+        check inter 1000 <% if data["backend_ssl"] then %>
+           <% if data["backend_ssl"].downcase == "verify" then %>
+             ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem <% if data["backend_verifyhost"] then %>
+             verifyhost <%= data["backend_verifyhost"] %> <% end %>
+           <% elsif data["backend_ssl"].downcase == "noverify" then %>
+             ssl verify none <% end %>
+        <% end %>
 
-    <% end -%>
-<% end -%>
+    <% end %>
+<% end %>
 
 <%# TCP Backends %>
 <%
@@ -378,15 +378,15 @@ if tcp_proxy["backend_port"]
 end %>
 
   <% tcp_proxy["backend_servers"].each_with_index do |ip, index| %>
-        server node<%= index %> <%= ip %>:<%= backend_port %> <% if_p("ha_proxy.resolvers") do -%>
-        resolvers default <% end -%> check inter 1000  <% if tcp_proxy["backend_ssl"] then -%>
-           <% if tcp_proxy["backend_ssl"].downcase == "verify" then -%>
-             ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem <% if tcp_proxy["backend_verifyhost"] then -%>
-             verifyhost <%= tcp_proxy["backend_verifyhost"] %> <% end -%>
-           <% elsif tcp_proxy["backend_ssl"].downcase == "noverify" then -%>
-             ssl verify none <% end -%>
-        <% end -%>
-  <% end -%>
+        server node<%= index %> <%= ip %>:<%= backend_port %> <% if_p("ha_proxy.resolvers") do %>
+        resolvers default <% end %> check inter 1000  <% if tcp_proxy["backend_ssl"] then %>
+           <% if tcp_proxy["backend_ssl"].downcase == "verify" then %>
+             ssl verify required ca-file /var/vcap/jobs/haproxy/config/backend-ca-certs.pem <% if tcp_proxy["backend_verifyhost"] then %>
+             verifyhost <%= tcp_proxy["backend_verifyhost"] %> <% end %>
+           <% elsif tcp_proxy["backend_ssl"].downcase == "noverify" then %>
+             ssl verify none <% end %>
+        <% end %>
+  <% end %>
 
   <% if tcp_proxy["health_check_http"] then %>
 listen health_check_http_tcp-<%= tcp_proxy["name"] %>
@@ -395,5 +395,5 @@ listen health_check_http_tcp-<%= tcp_proxy["name"] %>
     monitor-uri /health
     acl tcp-<%= tcp_proxy["name"] %>-routers_down nbsrv(tcp-<%= tcp_proxy["name"] %>) eq 0
     monitor fail if tcp-<%= tcp_proxy["name"] %>-routers_down
-  <% end -%>
-<% end -%>
+  <% end %>
+<% end %>

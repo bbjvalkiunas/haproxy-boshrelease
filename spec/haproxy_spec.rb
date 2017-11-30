@@ -12,13 +12,13 @@ describe 'haproxy job' do
 
     it 'generates config from manifest properties' do
       tpl_output = template.render(
-        'haproxy' => [{
-          'backend_port' => '8080808080',
-          'log_level' => 'debug'
-        }]
+        'ha_proxy' => {
+          'log_level' => 'debug',
+          'threads' => 5
+        }
       )
 
-      pp tpl_output
+      File.write('./output', tpl_output)
 
     end
   end
